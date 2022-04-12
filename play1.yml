@@ -25,12 +25,19 @@
         quiet: true
       loop: "{{ data['interfaces'] | map(attribute='subnet-mask') | select() + data['ha'] | map(attribute='subnet-mask') | select() + data['wan'] | map(attribute='subnet-mask') | select() + data['vlan'] | map(attribute='subnet-mask') | select() + data['mgmt'] | map(attribute='subnet-mask') | select()}}"
 
+
+    - name: Checking if LAN2 is configured
+      fail:
+        msg: Cancelling the Playbook. Please review if LAN2 interface is defined
+      when: data['interfaces'] | selectattr('name','match','LAN2') | length == 0
+
     - name: "Render interfaces config"
       ansible.builtin.template:
         src: templates/interfaces.j2
         dest: rendered/interfaces.cfg
         lstrip_blocks: yes
-      when: data['interfaces'] is defined
+      when:
+      - data['interfaces'] is defined
 
     - name: "Validating System information"
       assert:
