@@ -1,0 +1,11 @@
+#!/bin/bash
+clish -c 'set interface LAN1 state on'
+clish -c 'set interface LAN1 ipv4-address 192.168.1.1 subnet-mask 255.255.255.0'
+clish -c 'set interface LAN2 state on'
+clish -c 'set interface LAN2 ipv4-address 100.64.64.1 subnet-mask 255.255.255.248'
+clish -c 'add internet-connection interface LAN3 type static ipv4-address 100.100.100.1 subnet-mask 255.255.255.248 default-gw 100.100.100.2'
+clish -c 'set device-details hostname Singapore-FW'
+clish -c 'set security-management mode centrally-managed'
+clish -c 'set security-management local-override-mgmt-addr true mgmt-address 198.18.251.11 send-logs-to local-override-log-server-addr'
+clish -c 'set sic_init password aryaka123'
+clish -c 'set dns primary ipv4-address 8.8.8.8 secondary ipv4-address 4.2.2.2'

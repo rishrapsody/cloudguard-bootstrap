@@ -1,0 +1,29 @@
+{% if data['system']['HA'] == true %}
+    {%- if data['system']['config_type'] == 'primary' -%}
+    set device-details hostname {{data['system']['site']}}-FW01
+    {%- else -%}
+    set device-details hostname {{data['system']['site']}}-FW02
+    {% endif %}
+{% else %}
+set device-details hostname {{data['system']['site']}}-FW
+{% endif %}
+
+{# Management Mode #}
+{% if data['system']['management_mode'] == 'central' %}
+set security-management mode centrally-managed
+set security-management local-override-mgmt-addr true mgmt-address {{data['system']['central_management']['address']}} send-logs-to local-override-log-server-addr
+set sic_init password {{data['system']['central_management']['gateway_sic_key']}}
+{% else -%}
+set security-management mode locally-managed
+{% endif %}
+
+{# DNS Config #}
+{% if data['system']['dns1'] is defined and data['system']['dns2'] is defined %}
+{% if data['system']['dns1'] is ansible.utils.ipv4_address and data['system']['dns2'] is ansible.utils.ipv4_address %}
+set dns primary ipv4-address {{data['system']['dns1']}} secondary ipv4-address {{data['system']['dns2']}}
+{% else -%}
+set dns primary ipv4-address 8.8.8.8 secondary ipv4-address 1.1.1.1
+{% endif %}
+{% endif %}
+
+

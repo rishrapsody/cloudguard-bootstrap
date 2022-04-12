@@ -1,0 +1,12 @@
+---
+system:
+  site: Singapore
+  management_mode: central
+  central_management:
+    address: 198.18.251.11
+    gateway_sic_key: aryaka123
+  dns1: 8.8.8.8
+  dns2: 4.2.2.2
+  HA: false
+  DualISP: false
+  config_type: secondary

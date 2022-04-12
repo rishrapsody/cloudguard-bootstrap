@@ -1,0 +1,79 @@
+---
+- name: "Bootstrap playbook"
+  hosts: localhost
+  gather_facts: no
+
+
+  tasks:
+    - name: "Load input data"
+      include_vars:
+        dir: vars
+        name: data
+
+    - name: "Validating if user IPs are Valid"
+      assert:
+        that: item is ansible.utils.ipv4_address
+        fail_msg: '{{item}} is not a valid IP address'
+        quiet: true
+      loop: "{{ data['interfaces'] | map(attribute='ipv4-address') | select() + data['ha'] | map(attribute='ipv4-address') | select() + data['wan'] | map(attribute='ipv4-address') | select() + data['vlan'] | map(attribute='ipv4-address') | select() + data['mgmt'] | map(attribute='ipv4-address') | select()}}"
+
+
+    - name: "Validating if Netmask is Valid"
+      assert:
+        that: item is ansible.utils.ipv4_netmask
+        fail_msg: '{{item}} is not a valid Netmask'
+        quiet: true
+      loop: "{{ data['interfaces'] | map(attribute='subnet-mask') | select() + data['ha'] | map(attribute='subnet-mask') | select() + data['wan'] | map(attribute='subnet-mask') | select() + data['vlan'] | map(attribute='subnet-mask') | select() + data['mgmt'] | map(attribute='subnet-mask') | select()}}"
+
+    - name: "Render interfaces config"
+      ansible.builtin.template:
+        src: templates/interfaces.j2
+        dest: rendered/interfaces.cfg
+        lstrip_blocks: yes
+      when: data['interfaces'] is defined
+
+    - name: "Validating System information"
+      assert:
+        that:
+          - data['system'] is defined
+          - data['system']['central_management']['address'] is ansible.utils.ipv4_address
+          - data['system']['config_type'] == 'primary' or data['system']['config_type'] == 'secondary'
+        fail_msg: "Input Data ==> {{data['system']}}"
+        quiet: true
+
+    - name: "Render System config"
+      ansible.builtin.template:
+        src: templates/system.j2
+        dest: rendered/system.cfg
+        lstrip_blocks: yes
+
+#    - name: "Create base yaml file"
+#      ansible.builtin.lineinfile:
+#        path: output/userdata.yml
+#        create: yes
+#        line: "--- \nclishcmd:"
+
+    - name: "Create base test file"
+      ansible.builtin.lineinfile:
+        path: output/user-data
+        create: yes
+        line: "#!/bin/bash"
+
+    - name: "Upload config data to yaml file"
+      ansible.builtin.lineinfile:
+        path: output/user-data
+        insertafter: EOF
+#        line: "- '{{item}}'"
+        line: "clish -c '{{item}}'"
+      with_lines: cat rendered/*.cfg
+      when: item != ""
+
+    - name: "Create .iso bootstrap image"
+      ansible.builtin.command: mkisofs -output output/configdrive.iso -volid cidata -joliet -V config-2 -rock output/user-data
+      notify: result
+
+  handlers:
+    - name: result
+      debug:
+        msg: "Bootstrap .iso image can be download from output directory"
+
