@@ -1,0 +1,12 @@
+set as {{data['system']['bgp_asn']}}
+set bgp external remote-as 56278 on
+set bgp external remote-as 56278 peer {{data['interfaces'] | selectattr('name','eq','LAN2') | map(attribute='gateway') | join}} on
+set bgp external remote-as 56278 peer {{data['interfaces'] | selectattr('name','eq','LAN2') | map(attribute='gateway') | join}} route-refresh on
+set routemap BGP-IN id 1 on
+set routemap BGP-IN id 1 allow
+set routemap BGP-OUT id 2 on
+set routemap BGP-OUT id 2 match protocol static
+set routemap BGP-OUT id 2 match protocol bgp
+set routemap BGP-OUT id 2 allow
+set bgp external remote-as 56278 export-routemap BGP-OUT preference 1 on
+set bgp external remote-as 56278 import-routemap BGP-IN preference 1 on

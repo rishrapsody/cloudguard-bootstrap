@@ -1,12 +1,13 @@
 ---
 system:
-  site: Singapore
+  site: Singapore               #set this as your site name [Note: FW hostname will be generated using this]
   management_mode: central
   central_management:
-    address: 198.18.251.11
-    gateway_sic_key: aryaka123
-  dns1: 8.8.8.8
-  dns2: 4.2.2.2
-  HA: true
-  DualISP: true
-  config_type: secondary
+    address: 198.18.251.11      #set this as your MDSM server IP
+    gateway_sic_key: aryaka123  #set this as your SIC one time password
+  dns1: 8.8.8.8                 #leave this as is, unless you want to set it to something else
+  dns2: 4.2.2.2                 #leave this as is, unless you want to set it to something else
+  HA: true                      #set this to true if your site has HA setup, otherwise false
+  DualISP: true                 #set this to true if your site has Dual ISP, otherwise false
+  config_type: secondary        #set this to either primary or secondary depending on the ANAPs VNF bootstrap required. Ignore for Standalone ANAP
+  bgp_asn: 65001                #set this as the FWs BGP ASN

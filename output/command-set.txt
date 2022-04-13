@@ -1,0 +1,33 @@
+set interface LAN1 state on
+set interface LAN1 ipv4-address 192.168.1.1 subnet-mask 255.255.255.0
+set interface LAN2 state on
+set interface LAN2 ipv4-address 100.64.64.1 subnet-mask 255.255.255.248
+add internet-connection interface LAN3 type static ipv4-address 169.254.10.2 subnet-mask 255.255.255.248 default-gw 169.254.10.3
+add internet-connection interface LAN4 type static ipv4-address 169.254.11.2 subnet-mask 255.255.255.248 default-gw 169.254.11.3
+add interface LAN1 vlan 10 ipv4-address 192.168.10.1 subnet-mask 255.255.255.0
+add interface LAN1 vlan 11 ipv4-address 192.168.11.1 subnet-mask 255.255.255.0
+set interface LAN10 state on
+set interface LAN10 ipv4-address 169.254.9.1 subnet-mask 255.255.255.252
+add static-route destination 10.10.10.1/32 nexthop gateway ipv4-address 1.2.3.4
+add static-route destination 10.10.1.0/24 nexthop gateway ipv4-address 1.2.3.4
+set device-details hostname Singapore-FW02
+set security-management mode centrally-managed
+set security-management local-override-mgmt-addr true mgmt-address 198.18.251.11 send-logs-to local-override-mgmt-addr
+set sic_init password aryaka123
+add static-route destination 198.18.251.11/32 nexthop gateway ipv4-address 100.64.64.2
+connect security-management mgmt-addr 198.18.251.11 use-one-time-password true local-override-mgmt-addr true send-logs-to local-override-mgmt-addr
+set dns primary ipv4-address 8.8.8.8 secondary ipv4-address 4.2.2.2
+set as 65001
+set bgp external remote-as 56278 on
+set bgp external remote-as 56278 peer 100.64.64.2 on
+set bgp external remote-as 56278 peer 100.64.64.2 route-refresh on
+set routemap BGP-IN id 1 on
+set routemap BGP-IN id 1 allow
+set routemap BGP-OUT id 2 on
+set routemap BGP-OUT id 2 match protocol static
+set routemap BGP-OUT id 2 match protocol bgp
+set routemap BGP-OUT id 2 allow
+set bgp external remote-as 56278 export-routemap BGP-OUT preference 1 on
+set bgp external remote-as 56278 import-routemap BGP-IN preference 1 on
+set expert password aryaka@123
+set property first-time-wizard off

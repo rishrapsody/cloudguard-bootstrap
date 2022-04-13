@@ -1,5 +1,5 @@
 ---
-- name: "Bootstrap playbook"
+- name: "Checkpoint VNF Bootstrap playbook"
   hosts: localhost
   gather_facts: no
 
@@ -82,13 +82,20 @@
         lstrip_blocks: yes
       failed_when: data['interfaces'] | selectattr('name','eq','LAN1') | map(attribute='gateway') | select() | length == 0
 
-    - name: "Create base test file"
+    - name: "Render ANAP to VNF BGP config"
+      ansible.builtin.template:
+        src: templates/lan2-bgp.j2
+        dest: rendered/lan2-bgp.cfg
+        lstrip_blocks: yes
+      when: data['system']['bgp_asn'] != "" and data['system']['bgp_asn'] != "56278" and data['system']['bgp_asn'] | int < 65535
+
+    - name: "Creating base test file"
       ansible.builtin.lineinfile:
         path: output/user-data
         create: yes
         line: "#!/bin/bash"
 
-    - name: "Upload config data to yaml file"
+    - name: "Creating userdata file for bootstrap config"
       ansible.builtin.lineinfile:
         path: output/user-data
         insertafter: EOF
@@ -96,12 +103,21 @@
       with_lines: cat rendered/*.cfg
       when: item != ""
 
-    - name: "Create .iso bootstrap image"
+    - name: "Creating file with all commands[Backup for manual fw config]"
+      ansible.builtin.lineinfile:
+        path: output/command-set.txt
+        insertafter: EOF
+        create: yes
+        line: "{{item}}"
+      with_lines: cat rendered/*.cfg
+      when: item != ""
+
+    - name: "Creating cloud-init bootstrap image"
       ansible.builtin.command: mkisofs -output output/configdrive.iso -volid cidata -joliet -V config-2 -rock output/user-data
       notify: result
 
   handlers:
     - name: result
       debug:
-        msg: "Bootstrap .iso image can be download from output directory"
+        msg: "Bootstrap cloud-init .iso image and Backup command-set file can be download from output directory"
 
