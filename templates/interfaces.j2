@@ -1,6 +1,8 @@
+{#set zero-touch cloud-url zerotouch.checkpoint.com verify-certificate off mode off#}
+
 {% for intf in data['interfaces'] %}
 set interface {{intf.name}} state on
-set interface {{intf.name}} ipv4-address {{intf['ipv4-address']}} subnet-mask {{intf['subnet-mask']}}
+set interface {{intf.name}} ipv4-address {{intf['ipv4-address'] | mandatory}} subnet-mask {{intf['subnet-mask'] | mandatory}}
 {% endfor %}
 
 {# WAN Interfaces Config #}
@@ -9,22 +11,22 @@ set interface {{intf.name}} ipv4-address {{intf['ipv4-address']}} subnet-mask {{
         {%- if data['system']['DualISP'] == true -%}
             {%- if intf['name'] == 'LAN3' -%}
                 {%- if data['system']['config_type'] == 'primary' -%}
-                    add internet-connection interface LAN3 type static ipv4-address 169.254.10.1 mask-length 255.255.255.248 default-gw 169.254.10.3
+                    add internet-connection interface LAN3 type static ipv4-address 169.254.10.1 subnet-mask 255.255.255.248 default-gw 169.254.10.3
                 {%- else -%}
-                    add internet-connection interface LAN3 type static ipv4-address 169.254.10.2 mask-length 255.255.255.248 default-gw 169.254.10.3
+                    add internet-connection interface LAN3 type static ipv4-address 169.254.10.2 subnet-mask 255.255.255.248 default-gw 169.254.10.3
                 {% endif %}
             {%- elif intf['name'] == 'LAN4' -%}
                 {%- if data['system']['config_type'] == 'primary' -%}
-                    add internet-connection interface LAN4 type static ipv4-address 169.254.11.1 mask-length 255.255.255.248 default-gw 169.254.11.3
+                    add internet-connection interface LAN4 type static ipv4-address 169.254.11.1 subnet-mask 255.255.255.248 default-gw 169.254.11.3
                 {%- else -%}
-                    add internet-connection interface LAN4 type static ipv4-address 169.254.11.2 mask-length 255.255.255.248 default-gw 169.254.11.3
+                    add internet-connection interface LAN4 type static ipv4-address 169.254.11.2 subnet-mask 255.255.255.248 default-gw 169.254.11.3
                 {% endif %}
             {% endif %}
         {%- else -%}
             {%- if data['system']['config_type'] == 'primary' and intf['name'] == 'LAN3' -%}
-                add internet-connection interface LAN3 type static ipv4-address 169.254.10.1 mask-length 255.255.255.248 default-gw 169.254.10.3
+                add internet-connection interface LAN3 type static ipv4-address 169.254.10.1 subnet-mask 255.255.255.248 default-gw 169.254.10.3
             {%- elif data['system']['config_type'] == 'secondary' and intf['name'] == 'LAN3' -%}
-                add internet-connection interface LAN3 type static ipv4-address 169.254.10.2 mask-length 255.255.255.248 default-gw 169.254.10.3
+                add internet-connection interface LAN3 type static ipv4-address 169.254.10.2 subnet-mask 255.255.255.248 default-gw 169.254.10.3
             {% endif %}
         {% endif %}
     {%- else -%}
@@ -32,4 +34,20 @@ set interface {{intf.name}} ipv4-address {{intf['ipv4-address']}} subnet-mask {{
             add internet-connection interface {{intf['name']}} type static ipv4-address {{intf['ipv4-address']}} subnet-mask {{intf['subnet-mask']}} default-gw {{intf['gateway']}}
         {% endif %}
     {% endif %}
+{% endfor %}
+
+{# Vlan config #}
+{%- for intf in data['vlan'] -%}
+add interface LAN1 vlan {{intf['id']}} ipv4-address {{intf['ipv4-address']}} subnet-mask {{intf['subnet-mask']}}
+{% endfor %}
+
+{# Mgmt config
+{%- for intf in data['mgmt'] -%}
+set interface {{intf['name']}} ipv4-address {{intf['ipv4-address']}} subnet-mask {{intf['subnet-mask']}} default-gw {{intf['gateway']}}
+{% endfor %}
+#}
+{# HA Port config #}
+{%- for intf in data['ha'] -%}
+set interface {{intf.name}} state on
+set interface {{intf['name']}} ipv4-address {{intf['ipv4-address']}} subnet-mask {{intf['subnet-mask']}}
 {% endfor %}

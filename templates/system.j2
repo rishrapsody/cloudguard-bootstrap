@@ -11,8 +11,10 @@ set device-details hostname {{data['system']['site']}}-FW
 {# Management Mode #}
 {% if data['system']['management_mode'] == 'central' %}
 set security-management mode centrally-managed
-set security-management local-override-mgmt-addr true mgmt-address {{data['system']['central_management']['address']}} send-logs-to local-override-log-server-addr
+set security-management local-override-mgmt-addr true mgmt-address {{data['system']['central_management']['address']}} send-logs-to local-override-mgmt-addr
 set sic_init password {{data['system']['central_management']['gateway_sic_key']}}
+add static-route destination {{data['system']['central_management']['address']}}/32 nexthop gateway ipv4-address {{data['interfaces'] | selectattr('name','eq','LAN2') | map(attribute='gateway') | join}}
+connect security-management mgmt-addr {{data['system']['central_management']['address']}} use-one-time-password true local-override-mgmt-addr true send-logs-to local-override-mgmt-addr
 {% else -%}
 set security-management mode locally-managed
 {% endif %}

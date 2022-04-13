@@ -9,6 +9,7 @@
       include_vars:
         dir: vars
         name: data
+        ignore_unknown_extensions: true
 
     - name: "Validating if user IPs are Valid"
       assert:
@@ -26,7 +27,7 @@
       loop: "{{ data['interfaces'] | map(attribute='subnet-mask') | select() + data['ha'] | map(attribute='subnet-mask') | select() + data['wan'] | map(attribute='subnet-mask') | select() + data['vlan'] | map(attribute='subnet-mask') | select() + data['mgmt'] | map(attribute='subnet-mask') | select()}}"
 
 
-    - name: Checking if LAN2 is configured
+    - name: "Checking if LAN2 is configured"
       fail:
         msg: Cancelling the Playbook. Please review if LAN2 interface is defined
       when: data['interfaces'] | selectattr('name','match','LAN2') | length == 0
@@ -45,6 +46,7 @@
           - data['system'] is defined
           - data['system']['central_management']['address'] is ansible.utils.ipv4_address
           - data['system']['config_type'] == 'primary' or data['system']['config_type'] == 'secondary'
+          - data['interfaces'] | selectattr('name','eq','LAN2') | map(attribute='gateway') | join is ansible.utils.ipv4_address
         fail_msg: "Input Data ==> {{data['system']}}"
         quiet: true
 
@@ -54,11 +56,31 @@
         dest: rendered/system.cfg
         lstrip_blocks: yes
 
-#    - name: "Create base yaml file"
-#      ansible.builtin.lineinfile:
-#        path: output/userdata.yml
-#        create: yes
-#        line: "--- \nclishcmd:"
+    - name: "Checking pre-requisite to prepare LAN route config [if LAN1 gateway is configured]"
+      assert:
+        that:
+          - data['interfaces'] | selectattr('name','eq','LAN1') | map(attribute='gateway') | select() | length > 0
+          - data['interfaces'] | selectattr('name','eq','LAN1') | map(attribute='gateway') | join is ansible.utils.ipv4_address
+        fail_msg: "Either LAN1 gateway is not configured or its not a Valid IP address"
+        quiet: true
+      when: lookup('file', 'vars/lan-routes').splitlines() | list | length > 0
+
+    - name: "Validating Destination networks in lan-routes file, if present"
+      assert:
+        that:
+          - item is ansible.utils.ipv4
+        fail_msg: "{{item}} is not a Valid IP address"
+        quiet: true
+      loop: "{{lookup('file', 'vars/lan-routes').splitlines() | list}}"
+      when: lookup('file', 'vars/lan-routes').splitlines() | list | length > 0
+
+
+    - name: "Render Lan routes config"
+      ansible.builtin.template:
+        src: templates/lan-routes.j2
+        dest: rendered/lan-routes.cfg
+        lstrip_blocks: yes
+      failed_when: data['interfaces'] | selectattr('name','eq','LAN1') | map(attribute='gateway') | select() | length == 0
 
     - name: "Create base test file"
       ansible.builtin.lineinfile:
@@ -70,7 +92,6 @@
       ansible.builtin.lineinfile:
         path: output/user-data
         insertafter: EOF
-#        line: "- '{{item}}'"
         line: "clish -c '{{item}}'"
       with_lines: cat rendered/*.cfg
       when: item != ""

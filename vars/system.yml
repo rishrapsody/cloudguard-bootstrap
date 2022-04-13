@@ -7,6 +7,6 @@ system:
     gateway_sic_key: aryaka123
   dns1: 8.8.8.8
   dns2: 4.2.2.2
-  HA: false
-  DualISP: false
+  HA: true
+  DualISP: true
   config_type: secondary

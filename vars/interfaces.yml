@@ -1,12 +1,22 @@
 ---
+##This file will track any/all interfaces details for Day0 setup##
+##Statements starting with pound symbol are comments##
+##Please do not modify or remove existing variable names##
+
 interfaces:
   - name: LAN1
     ipv4-address: 192.168.1.1
     subnet-mask: 255.255.255.0
+    gateway: 1.2.3.4
+    #LAN1 gateway is mandatory for static routes. Otherwise optinal
   - name: LAN2
     ipv4-address: 100.64.64.1
     subnet-mask: 255.255.255.248
+    gateway: 100.64.64.2
+    #LAN2 gateway(ANAP VNET0) is mandatory
 
+#This section is for Internet facing ports#
+#Provide these inputs only if your setup is not HA. In case of HA, default IPs will be assigned#
 wan:
   - name: LAN3
     ipv4-address: 100.100.100.1
@@ -17,18 +27,25 @@ wan:
     subnet-mask: 255.255.255.0
     gateway: 200.200.200.2
 
+#This is for SYNC port in case of HA. Leave it as is if your setup does not require SYNC port config#
 ha:
   - name: LAN10
     ipv4-address: 169.254.9.1
     subnet-mask: 255.255.255.252
 
+#This if for Firewalls Management port#
 mgmt:
   - name: Mgmt
-    ipv4-address:
-    subnet-mask:
+    ipv4-address: 172.12.12.1
+    subnet-mask: 255.255.255.248
+    gateway: 172.12.12.2
 
+#This if for optional LAN1 vlans config#
 vlan:
   - id: 10
     ipv4-address: 192.168.10.1
     subnet-mask: 255.255.255.0
-
+  - id: 11
+    ipv4-address: 192.168.11.1
+    subnet-mask: 255.255.255.0
+#Add similar section with id, ipv4 and subnet-mask for other vlans

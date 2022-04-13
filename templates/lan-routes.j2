@@ -1,0 +1,3 @@
+{% for destination in lookup('file', 'vars/lan-routes').splitlines() %}
+add static-route destination {{destination}} nexthop gateway ipv4-address {{data['interfaces'] | selectattr('name','eq','LAN1') | map(attribute='gateway') | join}}
+{% endfor %}
